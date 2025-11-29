@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  sensor-service:
+    build: .
+    container_name: sensor-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    # below is the Added Memory limit for the sensor
+    mem_limit: 50m
+    mem_reservation: 30m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Using VictoriaMetrics reducsing the memory usage
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.93.0
+    container_name: victoriametrics
+    ports:
+      - "8428:8428"
+    volumes:
+      - ./vm-data:/victoria-metrics-data
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--storageDataPath=/victoria-metrics-data"
+      - "--httpListenAddr=:8428"
+      - "--retentionPeriod=7d"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+      # below is the flag for memory optimization 
+      - "--memory.allowedPercent=40"
+      - "--search.maxQueryDuration=30s"
+    restart: unless-stopped
+    mem_limit: 150m
+    mem_reservation: 100m
+    cpus: 1.0
+
+  # lightweight grafana config.
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      # reduceing memory usage
+      - GF_INSTALL_PLUGINS=
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_LOG_LEVEL=warn
+      # reduceing query load
+      - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=15s
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    restart: unless-stopped
+    mem_limit: 100m
+    mem_reservation: 80m
+    cpus: 0.5
+    depends_on:
+      - victoriametrics
+
+# named volumes => persistent data
+volumes:
+  vm-data:
+  grafana-data:
