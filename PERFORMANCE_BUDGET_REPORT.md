@@ -1,7 +1,7 @@
 # Performance Budget Report
 ## Edge Device Observability Stack Optimization
 
-**Student Name:** [Your Name]  
+**Student Name:** Harsh Singh 
 **Date:** November 28, 2024  
 **Assignment:** 10xConstruction DevOps Intern Challenge
 
@@ -496,5 +496,5 @@ Thank you for this challenging and educational assignment.
 
 ---
 
-**Report prepared by:** [Your Name]  
+**Report prepared by:** Harsh Singh
 **Submission Date:** November 28, 2024
